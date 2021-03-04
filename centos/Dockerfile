@@ -1,0 +1,92 @@
+ARG OS_VERSION=8
+ARG ZENDPHP_VERSION=7.4
+FROM centos:$OS_VERSION as zphp-base
+
+ARG OS_VERSION
+ARG ZENDPHP_VERSION
+
+COPY centos/zendphp.repo /etc/yum.repos.d/zendphp.repo
+
+RUN set -e; \
+    # Some shell magic may seem counter-intuitive, but sh=bash in CentOS
+    OS_V=${OS_VERSION:0:1}; \
+    ZPHP_VER="${ZENDPHP_VERSION//.}"; \
+
+    # Repository setup and minimal installation
+    sed -e "s|__OS__|${OS_V}|g" -i /etc/yum.repos.d/zendphp.repo; \
+    yum -y install \
+        $([[ "${OS_V}" == "6" || "${OS_V}" == "7" ]] && echo centos-release-scl-rh) \
+        php${ZPHP_VER}zend-php-fpm \
+        php${ZPHP_VER}zend-php-cli \
+        php${ZPHP_VER}zend-php-opcache \
+        php${ZPHP_VER}zend-syspaths; \
+
+    # Preparations for zendphpctl
+    yum list "php${ZPHP_VER}zend-php-*" | \
+        cut -d. -f1 | \
+        grep -v 'php-pecl-' | \
+        grep -v "debuginfo" | \
+        grep -vE "^php${ZPHP_VER}zend-php-(devel|embedded|fpm|cgi|cli|common)\$" | \
+        sort > /etc/opt/zend/php${ZPHP_VER}zend/installable_ext; \
+    yum clean all; \
+
+    # Final tweaks
+    ln -s /opt/zend/php${ZPHP_VER}zend/root/usr/sbin/php-fpm /usr/local/bin/php-fpm; \
+    mkdir -p /etc/zendphp/conf.d;\
+    mv /etc/opt/zend/php${ZPHP_VER}zend/php.d/* /etc/zendphp/conf.d/; \
+    mv /etc/opt/zend/php${ZPHP_VER}zend/php.ini /etc/zendphp/; \
+    rm -rf /etc/opt/zend/php${ZPHP_VER}zend/php.d /etc/opt/zend/php${ZPHP_VER}zend/php.ini;\
+    ln -s /etc/zendphp/conf.d /etc/opt/zend/php${ZPHP_VER}zend/php.d; \
+    ln -s /etc/zendphp/php.ini /etc/opt/zend/php${ZPHP_VER}zend/php.ini
+
+FROM zphp-base AS zphp-more
+ARG OS_VERSION
+ARG ZENDPHP_VERSION
+
+COPY centos/*.ini /
+RUN set -e; \
+    OS_V=${OS_VERSION:0:1}; \
+    ZPHP_VER="${ZENDPHP_VERSION//.}"; \
+
+    # Installing build tools
+    [[ ${OS_V} -gt 7 ]] && dnf -y install dnf-plugins-core; \
+    [[ ${OS_V} -gt 7 ]] && dnf config-manager --set-enabled PowerTools; \
+    yum install -y gcc gcc-c++ make php${ZPHP_VER}zend-php-devel php${ZPHP_VER}zend-php-pear; \
+
+    # Compiling swoole and inotify (yes command answers 'yes' to pecl prompts)
+    yes | /opt/zend/php${ZPHP_VER}zend/root/bin/pecl install -a swoole inotify; \
+
+    # Moving files to a short path (where then final stage will pick them up) and stripping symbols for smaller size
+    mv /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/inotify.so /inotify.so ;\
+    mv /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/swoole.so /swoole.so ;\
+    strip /*.so
+
+
+# This final stage basically pulls a few files from different locations and seals the image
+FROM zphp-base
+ARG OS_VERSION
+ARG ZENDPHP_VERSION
+COPY scripts/* /usr/local/bin/
+COPY --from=zphp-more /swoole.* /inotify.* /tmp/
+
+# Putting the newly built binaries in place
+RUN set -e; \
+    ZPHP_VER="${ZENDPHP_VERSION//.}"; \
+    if [ $(stat -c %s /tmp/swoole.so) -eq 0 || $(stat -c %s /tmp/inotify.so) -eq 0 ]; then rm -f /tmp/swoole.* /tmp/inotify.*; exit 0; fi; \
+    mv /tmp/inotify.so /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/inotify.so ;\
+    mv /tmp/swoole.so /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/swoole.so ; \
+    mv /tmp/inotify.ini /etc/opt/zend/php${ZPHP_VER}zend/php.d/20-inotify.ini ;\
+    mv /tmp/swoole.ini /etc/opt/zend/php${ZPHP_VER}zend/php.d/20-swoole.ini 
+
+# "Activating" /usr/local/bin and preparing for non-privileged user
+RUN set -e; \
+    curl -Lo /usr/local/bin/gosu https://github.com/tianon/gosu/releases/latest/download/gosu-amd64; \
+    chmod a+x /usr/local/bin/*; \
+    # quick test that gosu was downloaded ok, if not, set -e will bail here
+    gosu root echo; \
+    mkdir -p /var/www/site; \
+    groupadd --system site; \
+	adduser --system --no-create-home --home /var/www/site --gid site --shell /bin/false web 
+
+EXPOSE 9000
+ENTRYPOINT ["entry_cli.sh"]

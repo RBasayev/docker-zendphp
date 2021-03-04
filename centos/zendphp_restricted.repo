@@ -1,0 +1,17 @@
+[zendphp]
+name=ZendPHP PHP Runtimes for Linux (CentOS/RHEL __OS__; x86_64)
+baseurl=http://repos.zend.com/zendphp/rpm_centos__OS__/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=http://repos.zend.com/zend.key
+username=__UN__
+password=__PW__
+
+[zendphp_noarch]
+name=ZendPHP PHP Runtimes for Linux (CentOS/RHEL __OS__; noarch)
+baseurl=http://repos.zend.com/zendphp/rpm_centos__OS__/noarch/
+enabled=1
+gpgcheck=1
+gpgkey=http://repos.zend.com/zend.key
+username=__UN__
+password=__PW__

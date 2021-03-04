@@ -1,0 +1,78 @@
+#!/bin/bash
+if echo $0 | grep ZendPHP-Common.lib > /dev/null 2>&1; then
+    echo "This script is not supposed to be executed directly."
+    echo 'The purpose of this script is to be "sourced" by other scripts'
+    exit 1
+fi
+
+
+function panic(){
+    # Usage: panic <exit status> <message>
+    echo -e "......\n$2\n......"
+    exit $1
+}
+
+function os_id(){
+    if [ -n "$OS_ID" ] || [ -n "$OS_VER" ]; then
+        true
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        export OS_ID=$ID
+        export OS_VER=$VERSION_ID
+    elif grep -i 'CentOS release 6' > /dev/null 2>&1; then
+        export OS_ID=centos
+        export OS_VER=6
+    else
+        echo "Not sure which OS this is..."
+        echo 'If you know, help me out by setting $OS_ID to "centos", "debian" or "ubuntu"'
+        echo 'and $OS_VER to... OS version, e.g., "8" or "20.04".'
+        echo "Bye for now."
+        echo
+        exit 1
+    fi
+}
+
+function isCentos(){
+    os_id
+    [[ "$OS_ID" == "centos" ]] && return 0 || return 1
+}
+
+function isApt(){
+    os_id
+    [[ "$OS_ID" != "centos" ]] && return 0 || return 1
+}
+
+function isDebian(){
+    os_id
+    [[ "$OS_ID" == "debian" ]] && return 0 || return 1
+}
+
+function isUbuntu(){
+    os_id
+    [[ "$OS_ID" == "ubuntu" ]] && return 0 || return 1
+}
+
+
+# Common variables
+PHP_VER=$(php -n -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+PHP_V=${PHP_VER/.}
+
+# Setting OS-specific paths
+if isCentos; then
+    PHP_INI="/etc/opt/zend/php${PHP_V}zend/php.ini"
+    PHP_D_PATH="/etc/opt/zend/php${PHP_V}zend/php.d"
+    PHP_ETC_PATH="/etc/opt/zend/php${PHP_V}zend"
+    PHP_EXT_DIR="/opt/zend/php${PHP_V}zend/root/usr/lib64/php/${PHP_V}zend/modules"
+elif isApt; then
+    if command -v php-fpm > /dev/null; then
+        PHP_INI="/etc/php/${PHP_VER}-zend/fpm/php.ini"
+        PHP_D_PATH="/etc/php/${PHP_VER}-zend/fpm/conf.d"
+    else
+        PHP_INI="/etc/php/${PHP_VER}-zend/cli/php.ini"
+        PHP_D_PATH="/etc/php/${PHP_VER}-zend/cli/conf.d"
+    fi
+        PHP_ETC_PATH="/etc/php/${PHP_VER}-zend"
+    PHP_EXT_DIR="/usr/lib/php/${PHP_VER}-zend"
+fi
+
+export PHP_VER PHP_V PHP_INI PHP_ETC_PATH PHP_D_PATH PHP_EXT_DIR
