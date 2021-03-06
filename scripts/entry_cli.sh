@@ -7,7 +7,7 @@ zendphp-env2config.sh -q
 . $(command -v ZendPHP-Common.lib)
 
 exec_cmd="exec"
-if [ "$1" == "--drop-cli" ]; then
+if [ "$1" == "--drop2web" ]; then
 	# same, but without root processes at all
 	chown -R web:site /var/www/site
 	exec_cmd="exec gosu web"

@@ -126,5 +126,4 @@ RUN set -e; \
     groupadd --system site; \
 	adduser --system --no-create-home --home /var/www/site --gid site --shell /bin/false web 
 
-EXPOSE 9000
 ENTRYPOINT ["entry_cli.sh"]

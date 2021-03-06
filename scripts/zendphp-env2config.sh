@@ -62,7 +62,7 @@ Environment variables (in order of processing):
 |
 |    ZADD_INI_KEYS=special.directive,special.directive_two
 |    ZSET_INI_special_directive=0
-|    ZSET_INI_special_directive_two='This cou|d need c()mpl!cated escaping :('
+|    ZSET_INI_special_directive_two='"This cou|d need c()mpl!cated escaping :("'
 |      (these will "register" two special directives, setting the first to
 |        0 and the other one to a line of text enclosed in double quotes)
 |

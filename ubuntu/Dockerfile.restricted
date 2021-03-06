@@ -93,5 +93,4 @@ RUN set -e; \
     addgroup --system site; \
 	adduser --system --no-create-home --home /var/www/site --ingroup site --shell /bin/false web
 
-EXPOSE 9000
 ENTRYPOINT ["entry_cli.sh"]
