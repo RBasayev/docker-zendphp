@@ -44,7 +44,7 @@ function zbuild(){
     if isCentos; then
         if [ $OS_VER -gt 7 ]; then
             dnf -y install dnf-plugins-core
-            dnf config-manager --set-enabled PowerTools
+            dnf config-manager --set-enabled powertools
         fi
         yum install -y gcc gcc-c++ make php${PHP_V}zend-php-devel php${PHP_V}zend-php-pear
         ln -s /opt/zend/php${PHP_V}zend/root/bin/pecl /usr/local/bin/pecl

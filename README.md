@@ -16,6 +16,18 @@ On rare occasions when I develop something, I want to use predictable tools of h
 
 If you can commit into this repository - yes, it's for you. Otherwise, most likely not.
 
+# Tags
+
+`:edge` = `:centos8-php80` - CentOS 8 with PHP 8.0
+
+`:latest` = `:ubuntu20-php74` - Ubuntu 20.04 with PHP 7.4
+
+`:centos8-php74` - CentOS 8 with PHP 7.4
+
+`:centos7-php74` - CentOS 7 with PHP 7.4
+
+Yes, PHP 7.4 is not the latest of PHP, but it seems to be the latest stable with zendPHP - I couldn't figure out how to install packages for building extensions on Ubuntu. In addition to that, we're still waiting for some big PHP projects to confirm the compatibility with PHP8. That's why the only PHP8 tag here is called __:edge__ (take, cut self, bleed, don't complain).
+
 # General Description
 
 To simply run a zendPHP container:
@@ -127,6 +139,36 @@ modify php.ini directives. Again: virtually __no__ safeguards! You're responsibl
 ZSET_INI_KEYS="memory_limit=60M,post_max_size=50M,upload_max_filesize=40M"
 ```
 
+# Configuration Locations
+
+The original configuration files in zendPHP are located differently in different operating systems, in Ubuntu there is also a distinction between CLI and FPM.
+
+In these images I moved the relevant configurations to `/etc/zendphp` and symlinked this location to the original layout. I have also removed the distinction between FPM and CLI for Ubuntu - no point in it, besides a couple of directives which I made part of the CLI entrypoint script.
+
+```
+/etc/zendphp/php.ini         - php.ini
+/etc/zendphp/conf.d/         - PHP scan directory (additional .ini files)
+/etc/zendphp/php-fpm.conf    - PHP-FPM configuration file
+/etc/zendphp/pool.d/         - PHP-FPM includes directory
+```
+
+Needless to say, all or some of these can be mounted from the host system or from a shared volume. The section [Environment Variables](#environment-variables) shows how configuration changes can be done for a relatively small number of configuration parameters (and only PHP configuration). Direct mounting of ready configuration files and directories is a better way for massive configuration changes. It is also more convenient in a versioned configurations scenario.
+
+### Examples:
+```
+docker run --rm -P -v "$PWD/php.ini.optimized":/etc/zendphp/php.ini rbasayev/zendphp
+docker run --rm -P -v fpm-pools-volume:/etc/zendphp/pool.d rbasayev/zendphp
+docker run --rm -P -v /mnt/DFS_a/shared-web-config:/etc/zendphp rbasayev/zendphp
+```
+
 # Docker-Compose
 
-Coming soon...
+It's a small one now, so I don't see a point in dedicating more than three lines to it - just read [docker-compose.yml](docker-compose.yml).
+
+To run: `docker-compose up`
+
+To see: http://127.0.0.1:8080
+
+To end: `docker-compose down`
+
+More is planned...

@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./_docroot:/var/www/site
+      - ./_caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./_caddy/data:/data
+      - ./_caddy/config:/config
+
+  zendphp:
+    image: rbasayev/zendphp:centos8-php80
+    expose:
+      - 9000
+    volumes:
+      - ./_docroot:/var/www/site
+    entrypoint: "entry_fpm.sh"
+

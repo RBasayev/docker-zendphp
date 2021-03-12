@@ -3,6 +3,11 @@ set -e
 
 zendphp-env2config.sh -q
 
+# to compansate for unification of FPM and CLI
+echo "disable_functions =" > /etc/zendphp/conf.d/00-cli.ini
+echo "expose_php = On" >> /etc/zendphp/conf.d/00-cli.ini
+echo "memory_limit = -1" >> /etc/zendphp/conf.d/00-cli.ini
+
 # shellcheck source=./ZendPHP-Common.lib
 . $(command -v ZendPHP-Common.lib)
 

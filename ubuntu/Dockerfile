@@ -78,6 +78,28 @@ RUN set -e; \
     mv /tmp/swoole.ini /etc/php/${ZENDPHP_VERSION}-zend/mods-available/swoole.ini ; \
     touch /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/inotify /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/swoole;
 
+# Unification of config files locations - same on all image flavors
+RUN set -e; \
+    mkdir /etc/zendphp; \
+    # moving things to /etc/zendphp:
+        mv /etc/php/${ZENDPHP_VERSION}-zend/fpm/php-fpm.conf /etc/zendphp/; \
+        mv /etc/php/${ZENDPHP_VERSION}-zend/fpm/pool.d /etc/zendphp/; \
+        mv /etc/php/${ZENDPHP_VERSION}-zend/fpm/php.ini /etc/zendphp/; \
+        mv /etc/php/${ZENDPHP_VERSION}-zend/fpm/conf.d /etc/zendphp/; \
+    # removing things to clear the place for symlinks:
+        rm /etc/php/${ZENDPHP_VERSION}-zend/cli/php.ini; \
+         rm -rf /etc/php/${ZENDPHP_VERSION}-zend/cli/conf.d; \
+    # creating symlinks in the original locations:
+        ln -s /etc/zendphp/php-fpm.conf /etc/php/${ZENDPHP_VERSION}-zend/fpm/php-fpm.conf; \
+        ln -s /etc/zendphp/pool.d /etc/php/${ZENDPHP_VERSION}-zend/fpm/pool.d; \
+        ln -s /etc/zendphp/php.ini /etc/php/${ZENDPHP_VERSION}-zend/fpm/php.ini; \
+        ln -s /etc/zendphp/php.ini /etc/php/${ZENDPHP_VERSION}-zend/cli/php.ini; \
+        ln -s /etc/zendphp/conf.d /etc/php/${ZENDPHP_VERSION}-zend/fpm/conf.d; \
+        ln -s /etc/zendphp/conf.d /etc/php/${ZENDPHP_VERSION}-zend/cli/conf.d; \
+    # nasty, I know:
+        rm /etc/zendphp/pool.d/www.conf; \
+        mv /usr/local/bin/site.conf /etc/zendphp/pool.d/
+
 # "Activating" /usr/local/bin and preparing for non-privileged user
 RUN set -e; \
     curl -Lo /usr/local/bin/gosu https://github.com/tianon/gosu/releases/latest/download/gosu-amd64; \

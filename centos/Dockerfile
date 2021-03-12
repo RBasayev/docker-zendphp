@@ -31,13 +31,7 @@ RUN set -e; \
     yum clean all; \
 
     # Final tweaks
-    ln -s /opt/zend/php${ZPHP_VER}zend/root/usr/sbin/php-fpm /usr/local/bin/php-fpm; \
-    mkdir -p /etc/zendphp/conf.d;\
-    mv /etc/opt/zend/php${ZPHP_VER}zend/php.d/* /etc/zendphp/conf.d/; \
-    mv /etc/opt/zend/php${ZPHP_VER}zend/php.ini /etc/zendphp/; \
-    rm -rf /etc/opt/zend/php${ZPHP_VER}zend/php.d /etc/opt/zend/php${ZPHP_VER}zend/php.ini;\
-    ln -s /etc/zendphp/conf.d /etc/opt/zend/php${ZPHP_VER}zend/php.d; \
-    ln -s /etc/zendphp/php.ini /etc/opt/zend/php${ZPHP_VER}zend/php.ini
+    ln -s /opt/zend/php${ZPHP_VER}zend/root/usr/sbin/php-fpm /usr/local/bin/php-fpm
 
 FROM zphp-base AS zphp-more
 ARG OS_VERSION
@@ -50,7 +44,7 @@ RUN set -e; \
 
     # Installing build tools
     [[ ${OS_V} -gt 7 ]] && dnf -y install dnf-plugins-core; \
-    [[ ${OS_V} -gt 7 ]] && dnf config-manager --set-enabled PowerTools; \
+    [[ ${OS_V} -gt 7 ]] && dnf config-manager --set-enabled powertools; \
     yum install -y gcc gcc-c++ make php${ZPHP_VER}zend-php-devel php${ZPHP_VER}zend-php-pear; \
 
     # Compiling swoole and inotify (yes command answers 'yes' to pecl prompts)
@@ -76,7 +70,25 @@ RUN set -e; \
     mv /tmp/inotify.so /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/inotify.so ;\
     mv /tmp/swoole.so /opt/zend/php${ZPHP_VER}zend/root/usr/lib64/php/${ZPHP_VER}zend/modules/swoole.so ; \
     mv /tmp/inotify.ini /etc/opt/zend/php${ZPHP_VER}zend/php.d/20-inotify.ini ;\
-    mv /tmp/swoole.ini /etc/opt/zend/php${ZPHP_VER}zend/php.d/20-swoole.ini 
+    mv /tmp/swoole.ini /etc/opt/zend/php${ZPHP_VER}zend/php.d/20-swoole.ini
+
+# Unification of config files locations - same on all image flavors
+RUN set -e; \
+    mkdir /etc/zendphp; \
+    ZPHP_VER="${ZENDPHP_VERSION//.}"; \
+    # moving things to /etc/zendphp:
+        mv /etc/opt/zend/php${ZPHP_VER}zend/php-fpm.conf /etc/zendphp/; \
+        mv /etc/opt/zend/php${ZPHP_VER}zend/php-fpm.d /etc/zendphp/pool.d; \
+        mv /etc/opt/zend/php${ZPHP_VER}zend/php.d /etc/zendphp/conf.d; \
+        mv /etc/opt/zend/php${ZPHP_VER}zend/php.ini /etc/zendphp/; \
+    # creating symlinks in the original locations:
+        ln -s /etc/zendphp/php-fpm.conf /etc/opt/zend/php${ZPHP_VER}zend/php-fpm.conf; \
+        ln -s /etc/zendphp/pool.d /etc/opt/zend/php${ZPHP_VER}zend/php-fpm.d; \
+        ln -s /etc/zendphp/conf.d /etc/opt/zend/php${ZPHP_VER}zend/php.d; \
+        ln -s /etc/zendphp/php.ini /etc/opt/zend/php${ZPHP_VER}zend/php.ini; \
+    # nasty, I know:
+        rm /etc/zendphp/pool.d/www.conf; \
+        mv /usr/local/bin/site.conf /etc/zendphp/pool.d/
 
 # "Activating" /usr/local/bin and preparing for non-privileged user
 RUN set -e; \

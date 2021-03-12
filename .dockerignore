@@ -1,1 +1,5 @@
 credentials*
+_caddy
+_docroot
+docker-compose.yml
+README.md

@@ -15,6 +15,14 @@ help:  ## Display this help
 
 ##@ Image Building
 
+edge: ## Build Generic ZendPHP image :edge (:centos8-php80)
+	@cd "$(HERE)"
+	@echo
+	@echo "\033[92mBuilding ZendPHP image for CentOS 8...\033[0m"
+	docker build --build-arg ZENDPHP_VERSION=8.0 -t rbasayev/zendphp:edge -t rbasayev/zendphp:centos8-php80 -f centos/Dockerfile .
+	@echo "\033[92mZendPHP image building done!\033[0m"
+	@echo
+
 latest: ## Build Generic ZendPHP image :latest (:ubuntu20-php74)
 	@cd "$(HERE)"
 	@echo
