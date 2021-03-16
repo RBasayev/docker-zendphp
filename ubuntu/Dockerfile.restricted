@@ -62,8 +62,8 @@ RUN --mount=type=secret,id=crypt,required=true,target=/etc/apt/auth.conf.d/zendp
     yes | pecl install -a swoole inotify; \
 
     # Moving files to a short path (where then final stage will pick them up) and stripping symbols for smaller size
-    mv /usr/lib/php/${ZENDPHP_VERSION}-zend/inotify.so /inotify.so ;\
-    mv /usr/lib/php/${ZENDPHP_VERSION}-zend/swoole.so /swoole.so ;\
+    mv /usr/lib/php/${ZENDPHP_VERSION}-zend/inotify.so /inotify.so; \
+    mv /usr/lib/php/${ZENDPHP_VERSION}-zend/swoole.so /swoole.so; \
     strip /*.so
 
 
@@ -77,11 +77,11 @@ COPY --from=zphp-more /swoole.* /inotify.* /tmp/
 # Putting the newly built binaries in place
 RUN set -e; \
     if [ $(stat -c %s /tmp/swoole.so) -eq 0 -o $(stat -c %s /tmp/inotify.so) -eq 0 ]; then rm -f /tmp/swoole.* /tmp/inotify.*; exit 0; fi; \
-    mv /tmp/inotify.so /usr/lib/php/${ZENDPHP_VERSION}-zend/inotify.so ;\
-    mv /tmp/swoole.so /usr/lib/php/${ZENDPHP_VERSION}-zend/swoole.so ; \
-    mv /tmp/inotify.ini /etc/php/${ZENDPHP_VERSION}-zend/mods-available/inotify.ini ;\
-    mv /tmp/swoole.ini /etc/php/${ZENDPHP_VERSION}-zend/mods-available/swoole.ini ; \
-    touch /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/inotify /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/swoole;
+    mv /tmp/inotify.so /usr/lib/php/${ZENDPHP_VERSION}-zend/inotify.so; \
+    mv /tmp/swoole.so /usr/lib/php/${ZENDPHP_VERSION}-zend/swoole.so; \
+    mv /tmp/inotify.ini /etc/php/${ZENDPHP_VERSION}-zend/mods-available/inotify.ini; \
+    mv /tmp/swoole.ini /etc/php/${ZENDPHP_VERSION}-zend/mods-available/swoole.ini; \
+    touch /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/inotify /var/lib/php/modules/${ZENDPHP_VERSION}-zend/registry/swoole
 
 # Unification of config files locations - same on all image flavors
 RUN set -e; \

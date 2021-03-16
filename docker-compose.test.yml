@@ -1,6 +1,13 @@
 version: "3.8"
 
 services:
+  sut:
+    image: curlimages/curl
+    depends_on:
+      - caddy
+      - zendphp
+    command: ["sh", "-c", "sleep 1; curl --fail http://caddy/i.php > /dev/null"]
+
   caddy:
     image: caddy:2-alpine
     ports:
@@ -12,10 +19,9 @@ services:
       - ./_caddy/config:/config
 
   zendphp:
-    image: rbasayev/zendphp:latest
+    image: rbasayev/zendphp:edge
     expose:
       - 9000
     volumes:
       - ./_docroot:/var/www/site
     entrypoint: "entry_fpm.sh"
-

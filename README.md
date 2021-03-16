@@ -163,7 +163,7 @@ docker run --rm -P -v /mnt/DFS_a/shared-web-config:/etc/zendphp rbasayev/zendphp
 
 # Docker-Compose
 
-It's a small one now, so I don't see a point in dedicating more than three lines to it - just read [docker-compose.yml](docker-compose.yml).
+It's a small one now, so I don't see a point in dedicating more than three lines to it - just read [docker-compose.yml](https://github.com/RBasayev/docker-zendphp/blob/main/docker-compose.yml).
 
 To run: `docker-compose up`
 
@@ -171,4 +171,6 @@ To see: http://127.0.0.1:8080
 
 To end: `docker-compose down`
 
-More is planned...
+# K8s / Helm
+
+Coming...

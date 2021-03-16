@@ -98,6 +98,8 @@ RUN set -e; \
     gosu root echo; \
     mkdir -p /var/www/site; \
     groupadd --system site; \
-	adduser --system --no-create-home --home /var/www/site --gid site --shell /bin/false web 
+	adduser --system --no-create-home --home /var/www/site --gid site --shell /bin/false web; \
+    # disabling the extensions from previous stage - intended to be disabled
+    zendphpctl EXT disable swoole inotify 
 
 ENTRYPOINT ["entry_cli.sh"]

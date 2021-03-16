@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# ARG OS_VERSION
+# ARG ZENDPHP_VERSION
+
+sleep 3
+
+# the tag example: centos8-php80
+zV=$(echo $DOCKER_TAG | cut -d'-' -f2)
+zVer=${zV:3:1}.${zV:4:1}
+
+# up to repository root
+cd ..
+
+# Cutting the corners here, but it's always centos8 by design.
+# If they actually release Rocky Linux by the end of the month, I may reconsider.
+docker build --build-arg OS_VERSION=8 \
+             --build-arg ZENDPHP_VERSION=$zVer \
+             -t $DOCKER_REPO:$DOCKER_TAG \
+             -t $DOCKER_REPO:edge .
+
+# "manual" test
+docker-compose -f docker-compose.test.yml run sut
