@@ -4,3 +4,4 @@ _docroot
 docker-compose.yml*
 README.md
 build.sh
+.github
