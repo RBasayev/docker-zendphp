@@ -3,19 +3,17 @@
 function usage(){
     cat <<EoUsage
 
-This script can build, test and push images of zendPHP 7.2-7.4 on CentOS 7, CentOS 8 and Ubuntu 20.04.
+This script can build, test and push images of zendPHP 7.3 and 7.4 on CentOS 7, CentOS 8 and Ubuntu 20.04.
 
 auto.sh <action> <PHP ver.>
 
-         build      7.2
-          OR         OR
          test       7.3
           OR         OR
          push       7.4
 
-$0 <build|test|push> <7.2|7.3|7.4>
+$0 <build|test|push> <7.3|7.4>
 
-Other zendPHP versions don't make sense right now. Versions prior to 7.2 require a license from Zend even to be installed (https://www.zend.com/contact-us). I have no plans on pushing these onto my Docker Hub. Version 8 will be built on Docker Hub itself for now (and only on CentOS 8).
+Other zendPHP versions don't make sense right now. Versions prior to 7.3 require a license from Zend even to be installed (https://www.zend.com/contact-us). I have no plans on pushing these onto my Docker Hub. Version 8 will be built on Docker Hub itself for now (and only on CentOS 8).
 
 EoUsage
 
@@ -25,7 +23,7 @@ EoUsage
 [[ -z $(echo "$1" | grep -E 'build|test|push') ]] && usage
     action=$1
 
-[[ -z $(echo "$2" | grep -E '7.2|7.3|7.4') ]] && usage
+[[ -z $(echo "$2" | grep -E '7.3|7.4') ]] && usage
     zVer="$2"
     zV="${zVer//.}"
     [[ $zV > 73 ]] && latest='-t rbasayev/zendphp:latest'

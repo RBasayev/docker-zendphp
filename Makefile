@@ -47,11 +47,11 @@ centos7: ## Build Generic ZendPHP image :centos7-php74
 	@echo "\033[92mZendPHP image building done!\033[0m"
 	@echo
 
-php71: ## Build ZendPHP 7.1 on CentOS7 (behind auth) :centos7-php71
+php72: ## Build ZendPHP 7.2 on CentOS7 (behind auth) :centos7-php72
 	@cd "$(HERE)"
 	@echo
 	@echo "\033[92mBuilding ZendPHP image for CentOS 7...\033[0m"
-	env DOCKER_BUILDKIT=1 docker build --secret id=crypt,src=credentials.centos --build-arg OS_VERSION=7 -t rbasayev/zendphp:centos7-php71 -f centos/Dockerfile.restricted .
+	env DOCKER_BUILDKIT=1 docker build --secret id=crypt,src=credentials.centos --build-arg OS_VERSION=7 -t rbasayev/zendphp:centos7-php72 -f centos/Dockerfile.restricted .
 	@echo "\033[92mZendPHP image building done!\033[0m"
 	@echo
 
@@ -83,10 +83,10 @@ run-centos7: ## Running :centos7-php74
 	docker run --rm -Pti -v "$(HERE)":/_host rbasayev/zendphp:centos7-php74 bash
 	@echo
 
-run-php71: ## Running :centos7-php71
+run-php72: ## Running :centos7-php72
 	@cd "$(HERE)"
 	@echo
-	docker run --rm -Pti -v "$(HERE)":/_host rbasayev/zendphp:centos7-php71 bash
+	docker run --rm -Pti -v "$(HERE)":/_host rbasayev/zendphp:centos7-php72 bash
 	@echo
 
 run-php56: ## Running :ubuntu20-php56

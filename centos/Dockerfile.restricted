@@ -2,7 +2,7 @@
 ARG OS_VERSION=7
 # NB: CentOS 6 is problematic and too old, don't use
 # NB: Only PHP ver. 5.6 and 7.1 are possible with CentOS 6
-ARG ZENDPHP_VERSION=7.1
+ARG ZENDPHP_VERSION=7.2
 FROM centos:$OS_VERSION as zphp-base
 
 ARG OS_VERSION
@@ -30,6 +30,9 @@ RUN --mount=type=secret,id=crypt,required=true set -e; \
         -e "s|__UN__|${UN}|g" \
         -e "s|__PW__|${PW}|g" \
         -i /etc/yum.repos.d/zendphp.repo; \
+
+    # zendPHP 7.3 and 7.2 seem to need libargon2, adding the EPEL repo
+    [[ $ZPHP_VER -lt 74 ]] && yum -y install epel-release; \
 
     yum -y install \
         $([[ "${OS_V}" == "6" || "${OS_V}" == "7" ]] && echo centos-release-scl-rh) \
