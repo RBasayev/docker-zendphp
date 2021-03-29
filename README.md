@@ -41,7 +41,7 @@ Release zendPHP versions:
 - 7.4
 ```
 ```
-An update in zendPHP repos, need to release versions 7.2, 7.3 and 7.4.
+An update in zendPHP repos, need to release versions 7.3 and 7.4.
 ```
 TODO: At least one more workflow to monitor repos.zend.com for changes and trigger builds on update.
 
