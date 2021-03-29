@@ -14,6 +14,10 @@ RUN set -e; \
 
     # Repository setup and minimal installation
     sed -e "s|__OS__|${OS_V}|g" -i /etc/yum.repos.d/zendphp.repo; \
+
+    # zendPHP 7.3 and 7.2 seem to need libargon2, adding the EPEL repo
+    [[ $ZPHP_VER -lt 74 ]] && yum -y install epel-release; \
+
     yum -y install \
         $([[ "${OS_V}" == "6" || "${OS_V}" == "7" ]] && echo centos-release-scl-rh) \
         php${ZPHP_VER}zend-php-fpm \
