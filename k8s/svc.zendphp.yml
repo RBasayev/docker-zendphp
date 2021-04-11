@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zendphp
+  labels:
+    where: backyard
+spec:
+  selector:
+    where: backyard
+  type: ClusterIP
+  ports:
+  - name: fpm
+    port: 9000
+    protocol: TCP

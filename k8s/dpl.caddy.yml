@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy
+  labels:
+    where: frontporch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caddy
+      where: frontporch
+  template:
+    metadata:
+      labels:
+        app: caddy
+        where: frontporch
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          volumeMounts:
+            - name: adminer-pv
+              mountPath: /var/www/site
+            - name: caddyfile
+              mountPath: /etc/caddy
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: adminer-pv
+          persistentVolumeClaim:
+            claimName: pvc-docroot
+        - name: caddyfile
+          configMap:
+            name: caddyfile
+            items:
+              - key: site-en
+                path: Caddyfile
+

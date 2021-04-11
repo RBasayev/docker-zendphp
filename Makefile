@@ -96,5 +96,15 @@ run-php56: ## Running :ubuntu20-php56
 	@echo
 
 
+##@ Kubernetes
+
+kombine: ## Combine all k8s definitions into one big YAML
+	@cd "$(HERE)"
+	@echo
+	@echo "\033[92mGluing Definitions Together...\033[0m"
+	@"$(HERE)k8s/glue.sh"
+	@echo "\033[92mGluing done!\033[0m"
+	@echo
+
 
 

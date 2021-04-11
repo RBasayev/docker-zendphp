@@ -1,0 +1,168 @@
+# pvc.docroot.yml :
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-docroot
+  labels:
+    app: adminer
+    where: backyard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30M
+
+
+---
+# cfg.caddy.yml :
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddyfile
+  labels:
+    where: frontporch
+data:
+  site-en : |
+    :80 {
+        root * /var/www/site
+        encode zstd gzip
+        templates
+        file_server browse
+
+        php_fastcgi zendphp:9000 {
+            resolve_root_symlink
+            dial_timeout  5s
+            read_timeout  15m
+            write_timeout 30s
+        }
+    }
+
+---
+# svc.caddy.yml :
+apiVersion: v1
+kind: Service
+metadata:
+  name: caddy
+  labels:
+    where: frontporch
+spec:
+  selector:
+    app: caddy
+    where: frontporch
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 9080
+    targetPort: 80
+
+
+---
+# svc.zendphp.yml :
+apiVersion: v1
+kind: Service
+metadata:
+  name: zendphp
+  labels:
+    where: backyard
+spec:
+  selector:
+    where: backyard
+  type: ClusterIP
+  ports:
+  - name: fpm
+    port: 9000
+    protocol: TCP
+
+
+---
+# dpl.caddy.yml :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy
+  labels:
+    where: frontporch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caddy
+      where: frontporch
+  template:
+    metadata:
+      labels:
+        app: caddy
+        where: frontporch
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          volumeMounts:
+            - name: adminer-pv
+              mountPath: /var/www/site
+            - name: caddyfile
+              mountPath: /etc/caddy
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: adminer-pv
+          persistentVolumeClaim:
+            claimName: pvc-docroot
+        - name: caddyfile
+          configMap:
+            name: caddyfile
+            items:
+              - key: site-en
+                path: Caddyfile
+
+
+
+---
+# dpl.zendphp.yml :
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zendphp
+  labels:
+    where: backyard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zendphp
+      where: backyard
+  template:
+    metadata:
+      labels:
+        app: zendphp
+        where: backyard
+    spec:
+      containers:
+        - name: zendphp
+          image: rbasayev/zendphp:latest
+          command:
+            - entry_fpm.sh
+          #args: ["--drop2web", "# causes permission issue :(, need to fix"]
+          volumeMounts:
+            - name: adminer-pv
+              mountPath: /var/www/site
+      volumes:
+        - name: adminer-pv
+          persistentVolumeClaim:
+            claimName: pvc-docroot
+      initContainers:
+        - name: get-adminer
+          image: busybox
+          volumeMounts:
+            - name: adminer-pv
+              mountPath: /Downloads
+          command:
+            - wget
+            - "-O"
+            - "/Downloads/index.php"
+            - "https://github.com/vrana/adminer/releases/download/v4.8.0/adminer-4.8.0-en.php"
+
+
+
