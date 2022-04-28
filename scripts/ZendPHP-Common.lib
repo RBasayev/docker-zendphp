@@ -71,7 +71,7 @@ elif isApt; then
         PHP_INI="/etc/php/${PHP_VER}-zend/cli/php.ini"
         PHP_D_PATH="/etc/php/${PHP_VER}-zend/cli/conf.d"
     fi
-        PHP_ETC_PATH="/etc/php/${PHP_VER}-zend"
+    PHP_ETC_PATH="/etc/php/${PHP_VER}-zend"
     PHP_EXT_DIR="/usr/lib/php/${PHP_VER}-zend"
 fi
 

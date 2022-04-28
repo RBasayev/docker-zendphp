@@ -9,8 +9,8 @@ if [ $# -eq 0 ]; then
 	exec php-fpm --nodaemonize --force-stderr -y $PHP_D_PATH/../php-fpm.conf
 elif [ "$1" == "--drop2web" ]; then
 	# same, but without root processes at all
-	chown -R web:site /var/www/site
-	exec gosu web php-fpm --nodaemonize --force-stderr -y $PHP_D_PATH/../php-fpm.conf
+	chown -R zendphp:zendphp /var/www/site
+	exec gosu zendphp php-fpm --nodaemonize --force-stderr -y $PHP_D_PATH/../php-fpm.conf
 else
 	exec "$@"
 fi

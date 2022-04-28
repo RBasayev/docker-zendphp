@@ -2,7 +2,7 @@
 
 function usage(){
     ext_help="$(zendphp-extensions.sh help | sed -e "s|zendphp-extensions.sh|$(basename $0) EXT|g" -e 's/^/|   /g')"
-    pecl_help="$(zendphp-pecl-tool.sh help | sed -e "s|zendphp-pecl-tool.sh|$(basename $0) PECL|g" -e 's/^/|   /g')"
+    pickle_help="$(zendphp-pickle-tool.sh help | sed -e "s|zendphp-pickle-tool.sh|$(basename $0) PICKLE|g" -e 's/^/|   /g')"
     cat <<EOU
 
 This script helps with the most common ZendPHP management tasks.
@@ -15,9 +15,9 @@ Subcommands:
 $ext_help
 |-----------------------------------------------------------------
 
-  - PECL | pecl
+  - PICKLE | pickle
 |-----------------------------------------------------------------
-$pecl_help
+$pickle_help
 |-----------------------------------------------------------------
 
   - COMPOSER | getcomposer | installcomposer
@@ -48,13 +48,13 @@ case "$1" in
         ;;
     EXT|ext|extensions)
         shift
-        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters, please review help."
+        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the EXT script, please review help."
         zendphp-extensions.sh $@
         ;;
-    PECL|pecl)
+    PICKLE|pickle)
         shift
-        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters, please review help."
-        zendphp-pecl-tool.sh $@
+        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the PICKLE wrapper, please review help."
+        zendphp-pickle-tool.sh $@
         ;;
     *) usage;;
 esac

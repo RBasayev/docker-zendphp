@@ -96,7 +96,7 @@ function plain(){
 }
 
 # Getting the list of all the $ZSET_INI_* variables
-sets=$(env | grep -oE '^ZSET_INI_[a-zA-Z0-9_]+' | xargs)
+sets=$(env | grep -vE '^ZSET_INI_KEYS' |grep -oE '^ZSET_INI_[a-zA-Z0-9_]+' | xargs)
 
 if [ -z "$sets""$ZCOMMENT_INI_KEYS""$ZADD_INI_KEYS""$ZDISABLE_EXTENSIONS""$ZENABLE_EXTENSIONS" ]; then
     # Quiet mode for "ideologically proper" entrypoint scripts

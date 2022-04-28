@@ -4,6 +4,9 @@ function usage(){
     cat <<EOU
 Automate ZendPHP extensions compilation.
 
+Prepare the system for build by installing the necessary tools:
+   # $(basename $0) prepare system
+
 Build extension(s) - examples:
    # $(basename $0) build [--tgz] inotify-0.1.6 30-swoole
 
@@ -32,14 +35,7 @@ EOU
 . $(command -v ZendPHP-Common.lib)
 
 
-function zbuild(){
-
-    PACK='echo -e --------\n\nSuccessfully built: '
-    if [ "$1" == "--tgz" ]; then
-        PACK='zpak'
-        shift
-    fi
-
+function zprepare(){
     # Installing build tools
     if isCentos; then
         if [ $OS_VER -gt 7 ]; then
@@ -47,11 +43,32 @@ function zbuild(){
             dnf config-manager --set-enabled powertools
         fi
         yum install -y gcc gcc-c++ make php${PHP_V}zend-php-devel php${PHP_V}zend-php-pear
-        ln -s /opt/zend/php${PHP_V}zend/root/bin/pecl /usr/local/bin/pecl
+        ln -s /opt/zend/php${PHP_V}zend/root/bin/phpize /usr/local/bin/phpize
+        ln -s /opt/zend/php${PHP_V}zend/root/bin/php-config /usr/local/bin/php-config
     else
         export DEBIAN_FRONTEND=noninteractive
         apt-get update
-        apt-get install -y php$PHP_VER-zend-dev php$PHP_VER-zend-xml libssl-dev
+        # holding the package because it brings incompatible PHP 7.4 packages
+        apt-mark hold php-pear
+        apt-get install -y php$PHP_VER-zend-dev php$PHP_VER-zend-xml libssl-dev make
+    fi
+
+    # installing Pickle (and enabling mbstring for dependency)
+    curl -L https://github.com/FriendsOfPHP/pickle/releases/latest/download/pickle.phar > /usr/local/bin/pickle
+    chmod +x /usr/local/bin/pickle
+    zendphpctl EXT enable mbstring
+}
+
+function zbuild(){
+
+    if ! command -v pickle; then 
+        zprepare
+    fi
+
+    PACK='echo -e --------\n\nSuccessfully built: '
+    if [ "$1" == "--tgz" ]; then
+        PACK='zpak'
+        shift
     fi
 
     ok_list=''
@@ -61,10 +78,11 @@ function zbuild(){
         suffix=$(echo $xt | grep -oE -- '-[\.0-9]+$')
         [[ -n "$suffix" ]] && xt=${xt:0:-${#suffix}}
 
-        yes | pecl install -a $xt$suffix
+        pickle install -n $xt$suffix
         ok=$?
         # if build unsuccessful, continue to the next item
-        [[ $ok -gt 0 ]] && echo "Compilation of $xt.so failed" && continue
+        [[ $ok -gt 0 ]] && echo "Compilation of $xt.so FAILED" && continue
+        echo "Compilation of $xt.so SUCCESFUL"
 
         # if we end up here, the build was successful
         ok_list="$ok_list $xt"
@@ -135,10 +153,11 @@ function zpak(){
 
 
 case "$1" in
-    build|simulate)
+    prepare|build|simulate)
         action=$1
         shift
         [[ ${#@} -gt 0 ]] || panic 1 "\nList of extensions to $action is empty\n"
+        # "prepare" doesn't really need parameters, but it's easier to fake one ("prepare system")
         z$action $@
         ;;
     *) usage;;

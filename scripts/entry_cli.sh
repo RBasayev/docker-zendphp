@@ -3,7 +3,7 @@ set -e
 
 zendphp-env2config.sh -q
 
-# to compansate for unification of FPM and CLI
+# to compensate for unification of FPM and CLI
 echo "disable_functions =" > /etc/zendphp/conf.d/00-cli.ini
 echo "expose_php = On" >> /etc/zendphp/conf.d/00-cli.ini
 echo "memory_limit = -1" >> /etc/zendphp/conf.d/00-cli.ini
@@ -14,8 +14,8 @@ echo "memory_limit = -1" >> /etc/zendphp/conf.d/00-cli.ini
 exec_cmd="exec"
 if [ "$1" == "--drop2web" ]; then
 	# same, but without root processes at all
-	chown -R web:site /var/www/site
-	exec_cmd="exec gosu web"
+	chown -R zendphp:zendphp /var/www/site
+	exec_cmd="exec gosu zendphp"
 	shift
 fi
 

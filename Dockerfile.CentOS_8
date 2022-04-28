@@ -1,0 +1,79 @@
+ARG OS=centos
+ARG OS_VERSION=8
+ARG ZENDPHP_VERSION=8.0
+ARG BASE_IMAGE=fpm
+# TIMEZONE=timezone the OS should use; UTC by default
+ARG TIMEZONE=UTC
+
+
+FROM cr.zend.com/zendphp/${ZENDPHP_VERSION}:${OS}-${OS_VERSION}-${BASE_IMAGE} as zphp-base
+
+# Cleaning Zend scripts and adding mine
+COPY scripts /tmp/scripts
+RUN set -e; \
+    rm -f /usr/local/bin/* /usr/local/bin/.*.swp; \
+    mv /tmp/scripts/* /usr/local/bin/; \
+    curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck > /usr/local/bin/php-fpm-healthcheck; \
+    chmod +x /usr/local/bin/*
+
+# Prepare tzdata
+RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} > /etc/timezone
+
+# Installing all the available extensions, then disabling most extensions.
+# Extension name examples on CentOS: php80zend-php-pecl-apcu, php80zend-php-ldap (cut off 15 symbols)
+RUN set -e; \
+    grep '^php' /etc/zendphp/installable_extensions | cut -c15- > /etc/zendphp/installable_extensions_short
+RUN set -e; \
+    export YUM_y=-y; \
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*; \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*; \
+    xargs -a /etc/zendphp/installable_extensions_short zendphpctl EXT install; \
+    yum install -y micro; \
+    rm -rf /var/lib/apt/lists/*
+RUN set -e; \
+    grep -vE 'phpdbg|interbase|mysql|opcache|sybase|zray' /etc/zendphp/installable_extensions_short > /etc/zendphp/extensions_to_turn_off_by_default; \
+    echo exif    >> /etc/zendphp/extensions_to_turn_off_by_default; \
+    echo mysqli  >> /etc/zendphp/extensions_to_turn_off_by_default; \
+    echo mysqlnd >> /etc/zendphp/extensions_to_turn_off_by_default; \
+    echo pdo     >> /etc/zendphp/extensions_to_turn_off_by_default; \
+    echo z_ray   >> /etc/zendphp/extensions_to_turn_off_by_default; \
+    zendphpctl EXT list enabled | grep 'pdo_' >> /etc/zendphp/extensions_to_turn_off_by_default
+RUN xargs -a /etc/zendphp/extensions_to_turn_off_by_default zendphpctl EXT disable
+
+
+
+
+FROM zphp-base AS zphp-more
+# Building some extensions
+ARG ZENDPHP_VERSION
+
+RUN set -e; \
+    export YUM_y=-y; \
+    zendphpctl PICKLE build --tgz mailparse inotify
+
+
+
+FROM zphp-base
+# This final stage basically pulls a few files from different locations and seals the image
+ARG ZENDPHP_VERSION
+
+COPY --from=zphp-more /compiled_extensions.tgz /tmp/
+
+# Putting the newly built binaries in place
+RUN set -e; \
+    tar -C / -xf /tmp/compiled_extensions.tgz
+
+# "Activating" /usr/local/bin and preparing for non-privileged user
+RUN set -e; \
+    curl -Lo /usr/local/bin/gosu https://github.com/tianon/gosu/releases/latest/download/gosu-amd64; \
+    chmod a+x /usr/local/bin/*; \
+    # quick test that gosu was downloaded ok, if not, set -e will bail here
+    gosu root echo; \
+    mkdir -p /var/www/site
+    # Commenting out 'web:site' for now, will try to use the built-in 'zendphp:zendphp'
+    # groupadd --system site; \
+	# useradd --system --no-create-home --home-dir /var/www/site --gid site --shell /bin/false web
+
+ENV ZSET_INI_KEYS=${TIMEZONE}
+
+ENTRYPOINT ["entry_fpm.sh"]
