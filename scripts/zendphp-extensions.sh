@@ -10,6 +10,9 @@ Install extension(s) - examples:
 To install all available extensions, you can use:
    # $(basename $0) list installable | xargs $(basename $0) install
 
+Update installable list - example:
+   # $(basename $0) update
+
 Uninstall extension - not implemented (no use case)
 
 Enable extension(s) - examples:
@@ -72,7 +75,37 @@ function zdisable(){
     fi
 }
 
+function zupdate(){
+    mkdir -p /etc/zendphp
+    if isCentos; then
+        yum list "php${PHP_V}zend-php-*" | \
+            cut -d. -f1 | \
+            grep -v "debuginfo" | \
+            grep -vE "^php${PHP_V}zend-php-(devel|embedded|fpm|cgi|cli|common)\$" | \
+        sort > /etc/zendphp/installable_extensions
+        grep '^php' /etc/zendphp/installable_extensions | cut -c15- > /etc/zendphp/installable_extensions_short
+        yum clean all
+    else
+        apt-get update
+        apt-cache search --names-only "^php${PHP_VER}-zend-"| \
+            cut -d' ' -f1 | \
+            grep -vE "^php${PHP_VER}-zend-(dev|fpm|cgi|cli|common)\$" | \
+        sort > /etc/zendphp/installable_extensions
+        grep '^php' /etc/zendphp/installable_extensions | cut -c13- > /etc/zendphp/installable_extensions_short
+        # 'apt-get clean' is not really necessary - targeting for Docker anyway
+        apt-get clean
+        rm -rf /var/lib/apt/lists/*
+    fi
+}
+
 function zinstall(){
+    if [ $(cat /etc/zendphp/installable_extensions | wc -l) -lt 5 ]; then
+    # Testing that the file exists and that it has a reasonable
+    # number of lines (at least 5 - arbitrary number, but seems reasonable).
+    # Some Zend images appear to not populate this file.
+        zupdate
+    fi
+
     list=""
     if isCentos; then
         for xt in $@; do
@@ -140,6 +173,9 @@ case $1 in
         shift
         [[ ${#@} -gt 0 ]] || panic 1 "\nList of extensions to $action is empty\n"
         z$action $@
+        ;;
+    update)
+        zupdate
         ;;
     list)
         shift

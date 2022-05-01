@@ -5,9 +5,9 @@ function usage(){
 Automate ZendPHP extensions compilation.
 
 Prepare the system for build by installing the necessary tools:
-   # $(basename $0) prepare system
+   # $(basename $0) prepare
 
-Build extension(s) - examples:
+Build extension(s) - example:
    # $(basename $0) build [--tgz] inotify-0.1.6 30-swoole
 
 Create 0-byte files, e.g., for consistent COPY/ADD behavior in Docker.
@@ -56,7 +56,7 @@ function zprepare(){
     # installing Pickle (and enabling mbstring for dependency)
     curl -L https://github.com/FriendsOfPHP/pickle/releases/latest/download/pickle.phar > /usr/local/bin/pickle
     chmod +x /usr/local/bin/pickle
-    zendphpctl EXT enable mbstring
+    zendphpctl EXT enable mbstring simplexml json dom phar
 }
 
 function zbuild(){
@@ -153,12 +153,16 @@ function zpak(){
 
 
 case "$1" in
-    prepare|build|simulate)
+    build|simulate)
         action=$1
         shift
         [[ ${#@} -gt 0 ]] || panic 1 "\nList of extensions to $action is empty\n"
-        # "prepare" doesn't really need parameters, but it's easier to fake one ("prepare system")
         z$action $@
         ;;
-    *) usage;;
+    prepare)
+        zprepare
+        ;;
+    *)
+        usage
+        ;;
 esac

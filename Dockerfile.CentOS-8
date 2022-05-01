@@ -22,11 +22,11 @@ RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} >
 # Installing all the available extensions, then disabling most extensions.
 # Extension name examples on CentOS: php80zend-php-pecl-apcu, php80zend-php-ldap (cut off 15 symbols)
 RUN set -e; \
-    grep '^php' /etc/zendphp/installable_extensions | cut -c15- > /etc/zendphp/installable_extensions_short
-RUN set -e; \
     export YUM_y=-y; \
     sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*; \
     sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*; \
+    zendphpctl EXT update; \
+    grep '^php' /etc/zendphp/installable_extensions | cut -c15- > /etc/zendphp/installable_extensions_short; \
     xargs -a /etc/zendphp/installable_extensions_short zendphpctl EXT install; \
     yum install -y micro; \
     rm -rf /var/lib/apt/lists/*
@@ -70,9 +70,6 @@ RUN set -e; \
     # quick test that gosu was downloaded ok, if not, set -e will bail here
     gosu root echo; \
     mkdir -p /var/www/site
-    # Commenting out 'web:site' for now, will try to use the built-in 'zendphp:zendphp'
-    # groupadd --system site; \
-	# useradd --system --no-create-home --home-dir /var/www/site --gid site --shell /bin/false web
 
 ENV ZSET_INI_KEYS=${TIMEZONE}
 

@@ -22,9 +22,9 @@ RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} >
 # Installing all the available extensions, then disabling most extensions.
 # Extension name examples on Ubuntu/Debian: php8.0-zend-xsl, php8.0-zend-ibm-db2 (cut off 13 symbols)
 RUN set -e; \
-    grep '^php' /etc/zendphp/installable_extensions | cut -c13- > /etc/zendphp/installable_extensions_short
-RUN set -e; \
     export DEBIAN_FRONTEND=noninteractive; \
+    zendphpctl EXT update; \
+    grep '^php' /etc/zendphp/installable_extensions | cut -c13- > /etc/zendphp/installable_extensions_short; \
     xargs -a /etc/zendphp/installable_extensions_short zendphpctl EXT install; \
     apt-get install -y micro; \
     rm -rf /var/lib/apt/lists/*
@@ -74,9 +74,6 @@ RUN set -e; \
     # quick test that gosu was downloaded ok, if not, set -e will bail here
     gosu root echo; \
     mkdir -p /var/www/site
-    # Commenting out 'web:site' for now, will try to use the built-in 'zendphp:zendphp'
-    # addgroup --system site; \
-	# adduser --system --no-create-home --home /var/www/site --ingroup site --shell /bin/false web
 
 ENV ZSET_INI_KEYS=${TIMEZONE}
 

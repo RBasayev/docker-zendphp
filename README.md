@@ -5,28 +5,28 @@
 ### GitHub https://github.com/RBasayev/docker-zendphp
 
 
->## __N.B.__ for Zend's official images, check zend.com
+>## __N.B.__ for Zend's official images, check https://cr.zend.com
 <br><br>
 
 # What is this repo and why zendPHP?
 
 On rare occasions when I develop something, I want to use predictable tools of high quality. And Docker.
 
-# Is this for me?
-
-If you can commit into this repository - yes, it's for you. Otherwise, most likely not.
+Also see [What's New](WhatsNew.md).
 
 # Tags
 
-`:edge` = `:centos8-php80` - CentOS 8 with PHP 8.0
+`:latest` = `:8-ubuntu` = `:8.1-ubuntu-20.04-fpm` - Ubuntu 20.04 with PHP 8.1
 
-`:latest` = `:ubuntu20-php74` - Ubuntu 20.04 with PHP 7.4
+`:8-centos` = `:8.1-centos-8-fpm` - CentOS 8 with PHP 8.1
 
-`:centos8-php74` - CentOS 8 with PHP 7.4
+`:8.0-ubuntu-20.04-fpm` - Ubuntu 20.04 with PHP 8.0
 
-`:centos7-php74` - CentOS 7 with PHP 7.4
+`:8.0-centos-8-fpm` - CentOS 8 with PHP 8.0
 
-Yes, PHP 7.4 is not the latest of PHP, but it seems to be the latest stable with zendPHP - I couldn't figure out how to install packages for building extensions on Ubuntu. In addition to that, we're still waiting for some big PHP projects to confirm the compatibility with PHP8. That's why the only PHP8 tag here is called __:edge__ (take, cut self, bleed, don't complain).
+`:7-ubuntu` = `:7.4-ubuntu-20.04-fpm` - Ubuntu 20.04 with PHP 7.4
+
+`:7-centos` = `:7.4-centos-8-fpm` - CentOS 8 with PHP 7.4
 
 A little more information about how tags are built, read in [GitHubActions.md](https://github.com/RBasayev/docker-zendphp/blob/main/.github/GitHubActions.md).
 
@@ -36,35 +36,23 @@ To simply run a zendPHP container:
 
 `docker run -ti --rm rbasayev/zendphp`
 
-Parameters will be passed on to PHP, for example:
 
-`docker run -ti --rm rbasayev/zendphp -v`
-```
-PHP 7.4.15 (cli) (built: Feb  4 2021 11:44:13) ( NTS )
-Copyright (c) The PHP Group
-Zend Engine v3.4.0, Copyright (c) Zend Technologies
-    with Zend OPcache v7.4.15, Copyright (c), by Zend Technologies
-```
+There is an option of running it with a non-root user __zendphp__ using the __--drop2web__ parameter:
 
-
-There is an option of running it with a non-root user __web__ using the __--drop2web__ parameter:
-
-`docker run  -ti --rm rbasayev/zendphp --drop2web -r "system('ps faux');"`
+`docker run -ti --rm --entrypoint entry_cli.sh rbasayev/zendphp:8-centos --drop2web -r "system('ps faux');"`
 ```
 USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-web          1 18.0  0.3  58920 15452 pts/0    Ss+  12:50   0:00 php -r system('ps faux');
-web         27  0.0  0.0   2612   536 pts/0    S+   12:50   0:00 sh -c ps faux
-web         28  0.0  0.0   5900  2976 pts/0    R+   12:50   0:00  \_ ps faux`
+zendphp      1 25.0  0.4 467400 32972 pts/0    Ss+  18:53   0:00 php -r system('ps faux');
+zendphp     31  0.0  0.0  44668  3364 pts/0    R+   18:53   0:00 ps faux
 ```
 
 # Extending this Image
 
-This image has two flavors: FPM and CLI. The default is CLI. To switch to FPM mode:
+This image has two flavors: FPM and CLI. The default is FPM. To switch to CLI mode:
 
 ```dockerfile
 FROM rbasayev/zendphp
-EXPOSE 9000
-ENTRYPOINT ["entry_fpm.sh"]
+ENTRYPOINT ["entry_cli.sh"]
 ```
 
 For modifications related to PHP, especially for installing/enabling/disabling PHP extensions, use the `zendphpctl` script. For example:
@@ -72,8 +60,8 @@ For modifications related to PHP, especially for installing/enabling/disabling P
 ```dockerfile
 FROM rbasayev/zendphp
 RUN set -e; \
-    zendphpctl pecl build 30-xhprof; \
-    zendphpctl ext enable swoole
+    zendphpctl PICKLE build 30-xhprof; \
+    zendphpctl EXT enable inotify
 ```
 
 More detals - [README-scripts.md](https://github.com/RBasayev/docker-zendphp/blob/main/scripts/README-scripts.md)
@@ -143,23 +131,14 @@ ZSET_INI_KEYS="memory_limit=60M,post_max_size=50M,upload_max_filesize=40M"
 
 # Configuration Locations
 
-The original configuration files in zendPHP are located differently in different operating systems, in Ubuntu there is also a distinction between CLI and FPM.
+The configuration files in zendPHP are located differently in different operating systems, in Ubuntu there is also a distinction between CLI and FPM. Anyway, they are all in `/etc/zendphp`.
 
-In these images I moved the relevant configurations to `/etc/zendphp` and symlinked this location to the original layout. I have also removed the distinction between FPM and CLI for Ubuntu - no point in it, besides a couple of directives which I made part of the CLI entrypoint script.
-
-```
-/etc/zendphp/php.ini         - php.ini
-/etc/zendphp/conf.d/         - PHP scan directory (additional .ini files)
-/etc/zendphp/php-fpm.conf    - PHP-FPM configuration file
-/etc/zendphp/pool.d/         - PHP-FPM includes directory
-```
-
-Needless to say, all or some of these can be mounted from the host system or from a shared volume. The section [Environment Variables](#environment-variables) shows how configuration changes can be done for a relatively small number of configuration parameters (and only PHP configuration). Direct mounting of ready configuration files and directories is a better way for massive configuration changes. It is also more convenient in a versioned configurations scenario.
+Needless to say, all or some of the configuration locations can be mounted from the host system or from a shared volume. The section [Environment Variables](#environment-variables) shows how configuration changes can be done for a relatively small number of configuration parameters (and only PHP configuration). Direct mounting of ready configuration files and directories is a better way for massive configuration changes. It is also more convenient in a versioned configurations scenario.
 
 ### Examples:
 ```
-docker run --rm -P -v "$PWD/php.ini.optimized":/etc/zendphp/php.ini rbasayev/zendphp
-docker run --rm -P -v fpm-pools-volume:/etc/zendphp/pool.d rbasayev/zendphp
+docker run --rm -P -v "$PWD/php.ini.optimized":/etc/zendphp/php.ini rbasayev/zendphp:8-centos
+docker run --rm -P -v fpm-pools-volume:/etc/zendphp/fpm/pool.d rbasayev/zendphp:8-ubuntu
 docker run --rm -P -v /mnt/DFS_a/shared-web-config:/etc/zendphp rbasayev/zendphp
 ```
 

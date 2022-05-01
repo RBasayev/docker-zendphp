@@ -48,12 +48,16 @@ case "$1" in
         ;;
     EXT|ext|extensions)
         shift
-        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the EXT script, please review help."
+        if [ "$1" != "update" ]; then
+            [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the EXT script, please review help."
+        fi
         zendphp-extensions.sh $@
         ;;
     PICKLE|pickle)
         shift
-        [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the PICKLE wrapper, please review help."
+        if [ "$1" != "prepare" ]; then
+            [[ ${#@} -gt 1 ]] || panic 1 "Not enough parameters for the PICKLE wrapper, please review help."
+        fi
         zendphp-pickle-tool.sh $@
         ;;
     *) usage;;

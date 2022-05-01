@@ -1,6 +1,7 @@
 # ZendPHPctl
 
-### `zendphp-extensions.sh` and `zendphp-pecl-tool.sh` can be executed separately, but it's probably more convenient to use the "frontend" script `zendphpctl`
+### `zendphp-extensions.sh` and `zendphp-pickle-tool.sh` can be executed separately, but it's probably more convenient to use the "frontend" script `zendphpctl`
+
 ## Help for `zendphpctl`
 
 This script helps with the most common ZendPHP management tasks.
@@ -16,6 +17,11 @@ Subcommands:
 |   Install extension(s) - examples:
 |      # zendphpctl EXT install oci8
 |      # zendphpctl EXT install oci8 pgsql soap
+|   To install all available extensions, you can use:
+|      # zendphpctl EXT list installable | xargs zendphpctl EXT install
+|
+|   Update installable list - example:
+|      # zendphpctl EXT update
 |
 |   Uninstall extension - not implemented (no use case)
 |
@@ -39,17 +45,19 @@ Subcommands:
 |   However, things happen, just be aware of this.
 |
 |-----------------------------------------------------------------
-```
-```
-  - PECL | pecl
+
+  - PICKLE | pickle
 |-----------------------------------------------------------------
 |   Automate ZendPHP extensions compilation.
 |
+|   Prepare the system for build by installing the necessary tools:
+|      # zendphpctl PICKLE prepare
+|
 |   Build extension(s) - examples:
-|      # zendphpctl PECL build [--tgz] inotify-0.1.6 30-swoole
+|      # zendphpctl PICKLE build [--tgz] inotify-0.1.6 30-swoole
 |
 |   Create 0-byte files, e.g., for consistent COPY/ADD behavior in Docker.
-|      # zendphpctl PECL simulate [--tgz] mongodb 30-xhprof
+|      # zendphpctl PICKLE simulate [--tgz] mongodb 30-xhprof
 |
 |   The extension names can be specified using this simple convention:
 |     [priority-]name[-version]
@@ -67,8 +75,7 @@ Subcommands:
 |       /compiled_extensions.tgz
 |
 |-----------------------------------------------------------------
-```
-```
+
   - COMPOSER | getcomposer | installcomposer
 |-----------------------------------------------------------------
 |   Install Composer into the specified directory.

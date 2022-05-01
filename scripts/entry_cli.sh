@@ -1,15 +1,18 @@
 #!/bin/bash
 set -e
 
-zendphp-env2config.sh -q
-
-# to compensate for unification of FPM and CLI
-echo "disable_functions =" > /etc/zendphp/conf.d/00-cli.ini
-echo "expose_php = On" >> /etc/zendphp/conf.d/00-cli.ini
-echo "memory_limit = -1" >> /etc/zendphp/conf.d/00-cli.ini
+# renaming so that $PHP_D_PATH is set to the CLI scan dir (see ZendPHP-Common.lib)
+mv /usr/sbin/php-fpm /usr/sbin/php-fpm-BAK
 
 # shellcheck source=./ZendPHP-Common.lib
 . $(command -v ZendPHP-Common.lib)
+
+zendphp-env2config.sh -q
+
+# to compensate for unification of FPM and CLI
+echo "disable_functions =" > $PHP_D_PATH/00-cli.ini
+echo "expose_php = On" >> $PHP_D_PATH/00-cli.ini
+echo "memory_limit = -1" >> $PHP_D_PATH/00-cli.ini
 
 exec_cmd="exec"
 if [ "$1" == "--drop2web" ]; then
